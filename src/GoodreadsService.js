@@ -19,10 +19,24 @@ class GoodreadsService {
     this.jwt = jwt;
     this.apiBaseUrl = apiBaseUrl;
 
+    // if we didn't pass in a JWT, try to get one from localStorage
+    if(!this.jwt){
+      localForage.getItem('jwt')
+        .then((localStorage_jwt) => {
+          if(localStorage_jwt){
+            this.jwt = localStorage_jwt;
+            }
+        });
+    }
+
     localForage
       .ready()
       .then(() => {
         this.shouldCache = true;
+        // if we have a jwt, make sure its cached
+        if(this.jwt){
+          localForage.setItem('jwt', jwt);
+        }
       })
       .catch((e) => {
         console.log(`LocalForage error: ${e}`)
