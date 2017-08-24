@@ -1,3 +1,15 @@
+# Reading List Library Helper - SPA Frontend
+
+An app to list your Goodreads shelves and books, and cache them locally so you can browse them offline.
+
+This allows you to walk into the public library and quickly look through the books on your Goodreads to-read list, in order to find the ones you want to check out.
+
+## FRONTEND
+
+This is the frontend single page React app. It connects to the backend API which then connects to Goodreads (https://github.com/pangolingo/reading-list-library-helper-api).
+
+---
+
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
 Below you will find some information on how to perform common tasks.<br>
