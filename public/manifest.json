@@ -1,5 +1,5 @@
 {
-  "short_name": "Lib Helper",
+  "short_name": "Library Help",
   "name": "Reading List Library Helper",
   "description": "An app to list your Goodreads shelves and books, and cache them locally so you can browse them offline.",
   "icons": [
@@ -14,7 +14,7 @@
         "type": "image/png"
     }
   ],
-  "start_url": "./index.html",
+  "start_url": "./",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#ffffff",

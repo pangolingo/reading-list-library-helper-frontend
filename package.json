@@ -18,5 +18,5 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
-  "homepage": "https://reading-list-library-helper.herokuapp.com"
+  "homepage": "https://library-helper.herokuapp.com"
 }
