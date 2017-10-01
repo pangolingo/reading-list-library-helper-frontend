@@ -49,7 +49,7 @@ class GoodreadsService {
     if(!this.jwt){
       throw new GoodreadsUnauthenticatedException();
     }
-    settings = Object.assign({}, settings, {
+    let settings = Object.assign({}, settings, {
       credentials: 'omit', // don't send cookies
       headers: new Headers({
         "Authorization": `Bearer ${this.jwt}`,
@@ -57,14 +57,121 @@ class GoodreadsService {
     });
 
     return fetch(endpoint, settings)
-    // .then(function(response) {
-    //   return response.blob();
-    // }).then(function(myBlob) {
-    //   var objectURL = URL.createObjectURL(myBlob);
-    //   myImage.src = objectURL;
-    // });
   }
-  parseShelf(name, xmlStr){
+  getShelf(name, page = 1){
+    return localForage.getItem(this.shelfCacheName(name, page))
+      .then((bookData) => {
+        if(bookData === null || this.responseIsExpired(bookData.queryDate)){
+          return this.loadShelf(name, page)
+        } else {
+          return bookData
+        }
+      });
+  }
+  loadShelf(name, page = 1){
+    return this.request(`${this.apiBaseUrl}/api/shelves/${name}?page=${page}&per_page=50`)
+      .then(this.checkResponseCode)
+      .then((response) => {
+        return response.text()
+      })
+      .then(shelfFromGoodreadsXml)
+      .then((shelf) => {
+        // add name property to shelf (we can't pick this up from goodreads)
+        shelf.name = name;
+        return shelf;
+      })
+      .then(this.cacheShelf)
+  }
+  cacheShelf(shelf){
+    if(!this.shouldCache){
+      return shelf;
+    }
+    let shelfData = {
+      queryDate: Date.now(),
+      shelf
+    };
+    localForage.setItem(this.shelfCacheName(shelf.name, shelf.pagination.currentpage), shelfData)
+    return shelf
+  }
+  shelfCacheName(name, page){
+    return `shelf.${name}.${page}`
+  }
+
+
+  getShelves(){
+    return localForage.getItem('shelves')
+      .then((shelvesData) => {
+        if(shelvesData === null || this.responseIsExpired(shelvesData.queryDate)){
+          return this.loadShelves();
+        } else {
+          return shelvesData.shelves;
+        }
+      });
+  }
+  loadShelves(){
+    // todo: catch errors here
+    return this.request(`${this.apiBaseUrl}/api/shelves`)
+      .then(this.checkResponseCode)
+      .then((response) => {
+        return response.text();
+      })
+      .then(shelvesFromGoodreadsXML)
+      .then(cacheShelves)
+  }
+  cacheShelves(shelves){
+    if(!this.shouldCache){
+      return shelves;
+    }
+    let shelvesData = {
+      queryDate: Date.now(),
+      shelves
+    };
+    localForage.setItem('shelves', shelvesData)
+    return shelves
+  }
+  checkResponseCode(response){
+    if(!response.ok){
+      if(response.status === 401){
+        // todo: clear the JWT here and in the cache
+        throw new GoodreadsUnauthenticatedException();
+      } else {
+        throw new GoodreadsException(response.status, response.statusText);
+      }
+    }
+    return response;
+  }
+  responseIsExpired(responseQueryDate){
+    // the query date was more than 1 day ago
+    return moment(responseQueryDate).add(1, 'day') < moment()
+  }
+  shelvesFromGoodreadsXML(xmlStr){
+    let domParser = new window.DOMParser();
+    let doc =  domParser.parseFromString(xmlStr, "text/xml");
+    let shelvesElements = doc.getElementsByTagName('user_shelf');
+    let shelves = [];
+    for (var shelfElement of shelvesElements) {
+      shelves.push(
+        Object.create(
+          shelf,
+          {
+            id: shelfElement.getElementsByTagName('id')[0].textContent,
+            name: shelfElement.getElementsByTagName('name')[0].textContent,
+            book_count: Number(shelfElement.getElementsByTagName('book_count')[0].textContent),
+            description: shelfElement.getElementsByTagName('description')[0].textContent
+            // sort:
+            // order:
+            // per_page:
+            // display_fields:
+            // featured:
+            // recommend_for:
+            // sticky:
+          }
+        )
+      )
+    }
+    return shelves;
+  }
+  shelfFromGoodreadsXml(xmlStr){
     let domParser = new window.DOMParser();
     let doc =  domParser.parseFromString(xmlStr, "text/xml");
     let booksElements = doc.getElementsByTagName('book');
@@ -86,7 +193,7 @@ class GoodreadsService {
         })
       }
 
-      books.push({
+      books.push(Object.assign(book, {
         id: Number(bookElement.getElementsByTagName('id')[0].textContent),
         isbn: bookElement.getElementsByTagName('isbn')[0].textContent,
         isbn13: bookElement.getElementsByTagName('isbn13')[0].textContent,
@@ -108,7 +215,7 @@ class GoodreadsService {
         // ratings_count: bookElement.getElementsByTagName('ratings_count')[0].textContent,
         description: bookElement.getElementsByTagName('description')[0].textContent,
         authors
-      })
+      }))
     }
 
     let pagination = {
@@ -119,104 +226,44 @@ class GoodreadsService {
       currentpage: parseInt(booksContainerElement.getAttribute('currentpage'), 10),
     }
 
-    let bookData = {
-      queryDate: Date.now(),
-      books,
+    let shelf = Object.assign(shelf, {
       pagination
-    };
+      books
+    })
 
-    return bookData
-  }
-  cacheShelf(name, bookData, page = 1){
-    if(this.shouldCache){
-      return localForage.setItem(`shelf.${name}.${page}`, bookData)
-    }
-    return true;
-  }
-  getShelf(name, page = 1){
-    return localForage.getItem(`shelf.${name}.${page}`)
-      .then((bookData) => {
-        if(bookData === null || this.responseIsExpired(bookData.queryDate)){
-          return this
-                  .loadShelf(name, page)
-                  .then(xmlStr => { return this.parseShelf(name, xmlStr) })
-                  .then(bookData => { this.cacheShelf(name, bookData, page); return bookData; });
-        } else {
-          return bookData
-        }
-      });
-  }
-  loadShelf(name, page = 1){
-    return this.request(`${this.apiBaseUrl}/api/shelves/${name}?page=${page}&per_page=50`)
-      .then((response) => {
-        this.checkResponseCode(response);
-        return response.text()
-      })
-  }
-  getShelves(){
-    return localForage.getItem('shelves')
-      .then((shelvesData) => {
-        if(shelvesData === null || this.responseIsExpired(shelvesData.queryDate)){
-          return this.loadShelves();
-        } else {
-          return shelvesData
-        }
-      });
-  }
-  loadShelvesRaw(){
-    return this.request(`${this.apiBaseUrl}/api/shelves`)
-      .then((response) => {
-        this.checkResponseCode(response);
-        return response.text();
-      })
-  }
-  loadShelves(){
-    return this.loadShelvesRaw()
-      .then(function(xmlStr){
-        let domParser = new window.DOMParser();
-        let doc =  domParser.parseFromString(xmlStr, "text/xml");
-        let shelvesElements = doc.getElementsByTagName('user_shelf');
-        let shelves = [];
-        for (var shelfElement of shelvesElements) {
-          shelves.push({
-            id: shelfElement.getElementsByTagName('id')[0].textContent,
-            name: shelfElement.getElementsByTagName('name')[0].textContent,
-            book_count: Number(shelfElement.getElementsByTagName('book_count')[0].textContent),
-            description: shelfElement.getElementsByTagName('description')[0].textContent
-            // sort:
-            // order:
-            // per_page:
-            // display_fields:
-            // featured:
-            // recommend_for:
-            // sticky:
-          })
-        }
-
-        let shelvesData = {
-          queryDate: Date.now(),
-          shelves
-        };
-
-        localForage.setItem('shelves', shelvesData)
-
-        return  shelvesData;
-      })
-  }
-  checkResponseCode(response){
-    if(!response.ok){
-      if(response.status === 401){
-        throw new GoodreadsUnauthenticatedException();
-      } else {
-        throw new GoodreadsException(response.status, response.statusText);
-      }
-    }
-    return true;
-  }
-  responseIsExpired(responseQueryDate){
-    // the query date was more than 1 day ago
-    return moment(responseQueryDate).add(1, 'day') < moment()
+    return shelf;
   }
 }
+
+const shelf = {
+  id: null,
+  name: null,
+  book_count: null,
+  description: null,
+  pagination: {
+    start: null,
+    end: null,
+    total: null,
+    numpages: null,
+    currentpage: null
+  }
+  books: []
+}
+
+const book = {
+  id: null,
+  isbn: null,
+  isbn13: null,
+  title: null,
+  title_without_series: null,
+  image_url: null,
+  small_image_url: null,
+  link: null,
+  published: null,
+  description: null,
+  authors: []
+}
+
+
 
 export default GoodreadsService;
