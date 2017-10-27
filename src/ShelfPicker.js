@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
 class ShelfPicker extends Component {
   constructor(props) {
@@ -26,5 +27,10 @@ class ShelfPicker extends Component {
     </div>
   }
 }
+
+ShelfPicker.propTypes = {
+  shelves: PropTypes.array.isRequired,
+  handleChange: PropTypes.func.isRequired,
+};
 
 export default ShelfPicker;
