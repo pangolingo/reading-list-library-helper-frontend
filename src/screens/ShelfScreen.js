@@ -6,6 +6,7 @@ import { apiBaseUrl } from '../config';
 import ShelfActions from '../reducers/actions';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import { onLastPageOfShelf, isLoadingShelf } from '../reducers';
 
 function jwtFromUrl(urlString) {
   var url = new URL(urlString);
@@ -27,6 +28,9 @@ class ShelfScreen extends Component {
     this.props.shelfActions.fetchShelf(goodreadsService, shelfName, 1);
   }
   getNextPage() {
+    if (this.props.onLastPageOfShelf) {
+      return;
+    }
     let shelfName = this.props.match.params.name;
     let pageToFetch = this.props.shelves[shelfName].pagination.currentPage + 1;
     this.props.shelfActions.fetchShelf(
@@ -35,9 +39,6 @@ class ShelfScreen extends Component {
       pageToFetch
     );
   }
-  _renderLoadingState() {
-    return <span>LOADING...</span>;
-  }
   _renderPages() {
     let shelfName = this.props.match.params.name;
     let shelf = this.props.shelves[shelfName];
@@ -45,11 +46,8 @@ class ShelfScreen extends Component {
       return null;
     }
     return Object.entries(shelf.pagination.pages).map(([pageNum, page]) => {
-      let isLoading = page.loading;
       return (
-        <div key={`page_${pageNum}`}>
-          <h2>Page {pageNum}</h2>
-          {isLoading ? 'LOADING...' : ''}
+        <div key={`page_${pageNum}`} className="Shelf__page">
           {page.ids.map(id => {
             let book = shelf.books[id];
             return <BookSummary key={book.id} book={book} />;
@@ -67,8 +65,10 @@ class ShelfScreen extends Component {
     let pagination = null;
     if (shelf.pagination.totalPages > 1) {
       pagination = (
-        <span>
-          page {shelf.pagination.currentPage} of {shelf.pagination.totalPages}
+        <span className="Shelf__pagination">
+          showing {Object.keys(shelf.books).length} of {shelf.totalBooks} books
+          | (page {shelf.pagination.currentPage} of{' '}
+          {shelf.pagination.totalPages})
         </span>
       );
     }
@@ -80,21 +80,28 @@ class ShelfScreen extends Component {
     if (!shelf) {
       return null;
     }
-    let nextPageButton = null;
-    if (shelf.pagination.currentPage < shelf.pagination.totalPages) {
-      nextPageButton = (
-        <button
-          onClick={this.getNextPage}
-          disabled={
-            shelf.pagination.pages[shelf.pagination.currentPage + 1] &&
-            shelf.pagination.pages[shelf.pagination.currentPage + 1].loading
-          }
-        >
-          Load next page
-        </button>
-      );
+    let atEnd = this.props.onLastPageOfShelf;
+    // shelf.pagination.currentPage >= shelf.pagination.totalPages &&
+    // !shelf.pagination.pages[shelf.pagination.currentPage].loading;
+    let nextPage = shelf.pagination.pages[shelf.pagination.currentPage + 1];
+    let isLoading = this.props.loading;
+    let buttonText = 'Load more';
+    if (atEnd) {
+      buttonText = 'You have reached the end';
     }
-    return nextPageButton;
+    if (isLoading) {
+      buttonText = 'Loading';
+    }
+
+    return (
+      <button
+        className="Shelf__load-more-button"
+        onClick={this.getNextPage}
+        disabled={atEnd || isLoading}
+      >
+        {buttonText}
+      </button>
+    );
   }
   _renderEmptyState() {
     return 'This shelf has no books.';
@@ -105,11 +112,10 @@ class ShelfScreen extends Component {
     let isEmpty = shelf && shelf.totalBooks !== null && shelf.totalBooks < 1;
     return (
       <div>
-        {!shelf && this._renderLoadingState()}
         {isEmpty && this._renderEmptyState()}
         {this._renderPages()}
         {this._renderPagination()}
-        {this._renderNextPageButton()}
+        {shelf && !isEmpty && this._renderNextPageButton()}
       </div>
     );
   }
@@ -118,7 +124,7 @@ class ShelfScreen extends Component {
     let shelfName = this.props.match.params.name;
 
     return (
-      <div>
+      <div className="Shelf">
         <Link to="/">Back</Link>
         <h2>Shelf "{shelfName}"</h2>
         {this._renderContent()}
@@ -127,10 +133,16 @@ class ShelfScreen extends Component {
   }
 }
 
-const mapStateToProps = state => {
+const mapStateToProps = (state, ownProps) => {
+  let shelfName = ownProps.match.params.name;
+  let shelf = state.shelves[shelfName];
   return {
     shelfList: state.shelfList,
-    shelves: state.shelves
+    shelves: state.shelves,
+    shelfName,
+    shelf: shelf,
+    onLastPageOfShelf: onLastPageOfShelf(state, shelfName),
+    loading: isLoadingShelf(shelf)
   };
 };
 

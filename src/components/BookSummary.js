@@ -16,18 +16,26 @@ class BookSummary extends Component {
       authors
     )}&rt=false%7C%7C%7CAUTHOR%7C%7C%7CAuthor`;
     return (
-      <div>
-        <img src={book.small_image_url} alt={book.title} />
-        <h2>{book.title}</h2>
-        <span>{authors}</span>
-        <br />
-        <a href={catalogTitleUrl} target="_blank" rel="noopener noreferrer">
-          Find title in Rochester Library
-        </a>
-        <br />
-        <a href={catalogAuthorUrl} target="_blank" rel="noopener noreferrer">
-          Find author in Rochester Library
-        </a>
+      <div className="BookSummary">
+        <div className="BookSummary_left-col">
+          <img
+            src={book.small_image_url}
+            alt={book.title}
+            className="BookSummary__image"
+          />
+        </div>
+        <div className="BookSummary_right-col">
+          <h2 className="BookSummary__title">{book.title}</h2>
+          <span className="BookSummary__authors">{authors}</span>
+          <br />
+          <a href={catalogTitleUrl} target="_blank" rel="noopener noreferrer">
+            Find title in Rochester Library
+          </a>
+          <br />
+          <a href={catalogAuthorUrl} target="_blank" rel="noopener noreferrer">
+            Find author in Rochester Library
+          </a>
+        </div>
       </div>
     );
   }

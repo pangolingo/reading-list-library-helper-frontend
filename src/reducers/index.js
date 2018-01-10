@@ -1,12 +1,17 @@
 import { combineReducers } from 'redux';
 import { routerReducer } from 'react-router-redux';
+import _ from 'underscore';
 import {
   FETCH_SHELF_LIST_REQUEST,
   FETCH_SHELF_LIST_SUCCESS,
   FETCH_SHELF_LIST_FAILURE,
   FETCH_SHELF_REQUEST,
   FETCH_SHELF_SUCCESS,
-  FETCH_SHELF_FAILURE
+  FETCH_SHELF_FAILURE,
+  LOGIN,
+  LOGIN_SUCCESS,
+  LOGIN_FAILURE,
+  LOGOUT
 } from './actions';
 
 function shelfList(state = {}, action) {
@@ -137,10 +142,52 @@ function shelves(state = {}, action) {
   }
 }
 
+export function onLastPageOfShelf(state, shelfName) {
+  let shelf = state.shelves[shelfName];
+  if (!shelf) {
+    return false;
+  }
+  return shelf.pagination.currentPage >= shelf.pagination.totalPages;
+}
+
+// returns true if the shelf hasn't been fetched yet
+// or if any page in the shelf is loading
+export function isLoadingShelf(shelf) {
+  if (!shelf) {
+    return true;
+  }
+  return _.some(shelf.pagination.pages, page => page.loading);
+}
+
+function authReducer(state = {}, action) {
+  switch (action.type) {
+    case LOGIN:
+      return state;
+    case LOGIN_SUCCESS:
+      return {
+        ...state,
+        jwt: action.jwt
+      };
+    case LOGIN_FAILURE:
+      return {
+        ...state,
+        jwt: null
+      };
+    case LOGOUT:
+      return {
+        ...state,
+        jwt: null
+      };
+    default:
+      return state;
+  }
+}
+
 const libraryHelper = combineReducers({
   shelves,
   shelfList,
-  router: routerReducer
+  router: routerReducer,
+  auth: authReducer
 });
 
 export default libraryHelper;

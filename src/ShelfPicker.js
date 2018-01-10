@@ -26,7 +26,12 @@ class ShelfPicker extends Component {
     });
     return (
       <div>
-        <select name="shelf" onChange={this.handleChange}>
+        <label htmlFor="shelf-picker">Select a shelf to browse:</label>
+        <select
+          name="shelf-picker"
+          id="shelf-picker"
+          onChange={this.handleChange}
+        >
           <option value="" />
           {shelfOptions}
         </select>

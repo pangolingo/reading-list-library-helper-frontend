@@ -1,5 +1,10 @@
+* {
+  box-sizing: border-box;
+}
+
 .App {
-  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .App-logo {
@@ -19,10 +24,68 @@
 }
 
 @keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .offlinebar {
   background-color: yellow;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+}
+
+.BookSummary {
+  display: flex;
+  flex-direction: 'horizontal';
+}
+.BookSummary__image {
+}
+.BookSummary__title {
+  margin: 0;
+}
+.BookSummary_right-col {
+  margin-left: 2em;
+}
+
+.BookSummary + .BookSummary {
+  margin-top: 2em;
+}
+
+.Shelf {
+  margin-bottom: 1em;
+}
+
+.Shelf__page + .Shelf__page {
+  margin-top: 2em;
+}
+
+.Shelf__load-more-button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: gold;
+  background-color: black;
+  font-size: 2em;
+  cursor: pointer;
+}
+.Shelf__load-more-button:disabled {
+  background-color: gray;
+  color: block;
+  cursor: default;
+}
+.Shelf__pagination {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  border-top: 1px solid black;
+  margin-top: 2em;
 }

@@ -5,5 +5,8 @@ export default {
     items: []
   },
   shelves: {},
-  router: null
+  router: null,
+  auth: {
+    jwt: null
+  }
 };
