@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import _ from 'underscore';
 import GoodreadsService from '../GoodreadsService';
 import BookSummary from '../components/BookSummary';
 import { Link } from 'react-router-dom';
@@ -45,7 +46,7 @@ class ShelfScreen extends Component {
     if (!shelf) {
       return null;
     }
-    return Object.entries(shelf.pagination.pages).map(([pageNum, page]) => {
+    return _.map(shelf.pagination.pages, (page, pageNum) => {
       return (
         <div key={`page_${pageNum}`} className="Shelf__page">
           {page.ids.map(id => {
@@ -66,9 +67,8 @@ class ShelfScreen extends Component {
     if (shelf.pagination.totalPages > 1) {
       pagination = (
         <span className="Shelf__pagination">
-          showing {Object.keys(shelf.books).length} of {shelf.totalBooks} books
-          | (page {shelf.pagination.currentPage} of{' '}
-          {shelf.pagination.totalPages})
+          showing {_.size(shelf.books)} of {shelf.totalBooks} books | (page{' '}
+          {shelf.pagination.currentPage} of {shelf.pagination.totalPages})
         </span>
       );
     }

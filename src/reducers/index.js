@@ -59,13 +59,11 @@ const defaultShelfPageState = {
 };
 
 function bookArrayToObject(books) {
-  return books.reduce((accumulator, book, i) => {
-    accumulator[String(book.id)] = book;
-    return accumulator;
-  }, {});
+  return _.indexBy(books, 'id');
 }
 
 function shelves(state = {}, action) {
+  let formerShelf = state[action.shelfName];
   switch (action.type) {
     case FETCH_SHELF_REQUEST:
       let shelf;
@@ -103,13 +101,13 @@ function shelves(state = {}, action) {
           name: action.shelf.name,
           description: action.shelf.description,
           books: {
-            ...state[action.shelfName].books,
+            ...formerShelf.books,
             ...booksById
           },
           totalBooks: action.shelf.pagination.total,
           pagination: {
             pages: {
-              ...state[action.shelfName].pagination.pages,
+              ...formerShelf.pagination.pages,
               [action.page]: {
                 loading: false,
                 ids: action.shelf.books.map(book => book.id)
@@ -123,14 +121,14 @@ function shelves(state = {}, action) {
     case FETCH_SHELF_FAILURE:
       return {
         ...state,
-        [action.shelfName]: Object.assign({}, state[action.shelfName], {
+        [action.shelfName]: Object.assign({}, formerShelf, {
           error: state.error,
           pagination: {
-            ...state[action.shelfName].pagination,
+            ...formerShelf.pagination,
             pages: {
-              ...state[action.shelfName].pagination.pages,
+              ...formerShelf.pagination.pages,
               [action.page]: {
-                ...state[action.shelfName].pagination.pages[action.page],
+                ...formerShelf.pagination.pages[action.page],
                 loading: false
               }
             }
