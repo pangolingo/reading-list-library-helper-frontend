@@ -4,6 +4,7 @@
 
 .App {
   max-width: 600px;
+  padding: 1em;
   margin: 0 auto;
 }
 
@@ -49,9 +50,11 @@ label {
 }
 .BookSummary__title {
   margin: 0;
+  font-weight: bold;
+  font-size: 1.2em;
 }
 .BookSummary_right-col {
-  margin-left: 2em;
+  margin-left: 1em;
 }
 
 .BookSummary + .BookSummary {
@@ -59,7 +62,9 @@ label {
 }
 
 .Shelf {
-  margin-bottom: 1em;
+}
+.Shelf__title {
+  font-size: 1.5em;
 }
 
 .Shelf__page + .Shelf__page {
@@ -75,6 +80,7 @@ label {
   background-color: black;
   font-size: 2em;
   cursor: pointer;
+  margin-bottom: 1em;
 }
 .Shelf__load-more-button:disabled {
   background-color: gray;
@@ -88,4 +94,10 @@ label {
   text-align: center;
   border-top: 1px solid black;
   margin-top: 2em;
+}
+
+.Header__title {
+  margin: 0.4em 0;
+  font-size: 1.2em;
+  font-style: italic;
 }

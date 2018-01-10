@@ -20,7 +20,7 @@ class App extends Component {
   }
   render() {
     return (
-      <div className="App">
+      <div className="App" id="top">
         <button onClick={this.clearCache}>Clear Cache</button>
         <ConnectedRouter history={history}>
           <div>

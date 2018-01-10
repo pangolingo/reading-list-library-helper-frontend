@@ -126,8 +126,9 @@ class ShelfScreen extends Component {
     return (
       <div className="Shelf">
         <Link to="/">Back</Link>
-        <h2>Shelf "{shelfName}"</h2>
+        <h2 className="Shelf__title">Shelf "{shelfName}"</h2>
         {this._renderContent()}
+        <a href="#top">Back to the top</a>
       </div>
     );
   }
