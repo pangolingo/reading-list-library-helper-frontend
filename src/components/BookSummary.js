@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
 class BookSummary extends Component {
     render(){
@@ -19,6 +20,15 @@ class BookSummary extends Component {
         <a href={catalogAuthorUrl} target="_blank" rel="noopener noreferrer">Find author in Rochester Library</a>
       </div>
     }
+}
+
+BookSummary.propTypes = {
+  book: PropTypes.shape({
+    authors: PropTypes.arrayOf(PropTypes.object),
+    title: PropTypes.string,
+    small_image_url: PropTypes.string,
+    title_without_series: PropTypes.string,
+  })
 }
 
 export default BookSummary;

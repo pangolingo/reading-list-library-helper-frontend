@@ -1,6 +1,12 @@
 import localForage from 'localforage';
 import moment from 'moment';
 
+export function OfflineException(code, message) {
+  this.message = message;
+  this.code = code;
+  this.name = 'OfflineException';
+}
+
 export function GoodreadsException(code, message) {
    this.message = message;
    this.code = code;
@@ -46,6 +52,9 @@ class GoodreadsService {
 
   }
   request(endpoint, _settings = {}){
+    if(!navigator.onLine){
+      throw new OfflineException();
+    }
     if(!this.jwt){
       throw new GoodreadsUnauthenticatedException();
     }

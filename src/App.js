@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
+import { ConnectedRouter } from 'react-router-redux'
+import { Switch, Route } from 'react-router'
+import withOfflineState from 'react-offline-hoc';
 import './App.css';
 import Header from './Header.js'
 import localForage from 'localforage';
@@ -8,14 +10,9 @@ import NoMatchScreen from './screens/NoMatchScreen';
 import LoginScreen from './screens/LoginScreen';
 import ShelfScreen from './screens/ShelfScreen';
 import PrivateRoute from './components/PrivateRoute';
+import OfflineBar from './components/OfflineBar';
 
-
-
-
-
-
-
-
+import { history } from './index';
 
 class App extends Component {
   clearCache(){
@@ -25,8 +22,9 @@ class App extends Component {
     return (
       <div className="App">
         <button onClick={this.clearCache}>Clear Cache</button>
-         <Router>
+         <ConnectedRouter history={history}>
           <div>
+            {!this.props.isOnline && <OfflineBar />}
             <Header />
             <hr />
             <div>
@@ -39,10 +37,10 @@ class App extends Component {
               </Switch>
             </div>
           </div>
-        </Router>
+        </ConnectedRouter>
       </div>
     );
   }
 }
 
-export default App;
+export default withOfflineState(App);

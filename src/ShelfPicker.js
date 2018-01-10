@@ -7,12 +7,13 @@ class ShelfPicker extends Component {
     this.handleChange = this.handleChange.bind(this);
   }
   handleChange(event) {
-    // alert(event.target.value);
-    // debugger;
     this.props.handleChange(event.target.value)
   }
   render() {
-    const shelfOptions = this.props.shelves.map((shelf) => {
+    if(this.props.shelves.loading) {
+      return <span>Loading shelves...</span>
+    }
+    const shelfOptions = this.props.shelves.items.map((shelf) => {
       let bookCountText = '';
       if(shelf.book_count > 0){
         bookCountText = `(${shelf.book_count} books)`
@@ -29,7 +30,7 @@ class ShelfPicker extends Component {
 }
 
 ShelfPicker.propTypes = {
-  shelves: PropTypes.array.isRequired,
+  shelves: PropTypes.object.isRequired,
   handleChange: PropTypes.func.isRequired,
 };
 

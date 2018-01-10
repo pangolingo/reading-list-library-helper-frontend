@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'
+import { bindActionCreators } from 'redux';
 import GoodreadsService from '../GoodreadsService';
 import ShelfPicker from '../ShelfPicker';
 import { apiBaseUrl } from '../config';
+import ShelfActions from '../reducers/actions';
 
 
 function jwtFromUrl(urlString){
@@ -14,41 +17,45 @@ let jwt = jwtFromUrl(window.location.href);
 let goodreadsService = new GoodreadsService(jwt, apiBaseUrl)
 
 
-export default class HomeScreen extends Component {
+class HomeScreen extends Component {
   constructor(props) {
     super(props);
-    // console.log(props)
-    this.handleShelfNavigate = this.handleShelfNavigate.bind(this);
 
-    // initial state
-    this.state = {
-      shelves: []
-    }
+    this.handleShelfNavigate = this.handleShelfNavigate.bind(this);
   }
   componentDidMount() {
-    goodreadsService.getShelves()
-      .then(function(shelves){
-        console.log(shelves)
-        this.setState({
-          shelves
-        })
-      }.bind(this))
-      .catch(function(error){
-        if(error.name === "GoodreadsUnauthenticatedException"){
-          this.props.history.push('/login')
-        } else {
-          throw error;
-        }
-      }.bind(this));
+    this.props.shelfActions.fetchShelfList(goodreadsService);
   }
   handleShelfNavigate(newShelfName) {
-    // alert(newShelfName);
     this.props.history.push(`/shelves/${newShelfName}`)
   }
   render() {
+    const shelfList = this.props.shelfList;
     return <div>
       <h2>Home</h2>
-      <ShelfPicker shelves={this.state.shelves} handleChange={this.handleShelfNavigate}></ShelfPicker>
+      { shelfList.error
+        ? <p>{shelfList.error.message}</p>
+        : <ShelfPicker shelves={shelfList} handleChange={this.handleShelfNavigate}></ShelfPicker>
+    }
     </div>
   }
 }
+
+const mapStateToProps = state => {
+  return {
+    shelfList: state.shelfList
+  }
+}
+
+const mapDispatchToProps = dispatch => {
+  return {
+    shelfActions: bindActionCreators(ShelfActions, dispatch),
+  }
+}
+
+HomeScreen = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(HomeScreen)
+
+export default HomeScreen
