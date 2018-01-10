@@ -6,6 +6,6 @@ const NoMatchScreen = () => (
     <h2>404</h2>
     <Link to="/">Home</Link>
   </div>
-)
+);
 
 export default NoMatchScreen;

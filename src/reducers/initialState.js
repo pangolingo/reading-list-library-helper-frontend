@@ -1,10 +1,9 @@
-
 export default {
   shelfList: {
     loading: false,
     error: null,
-    items: [],
+    items: []
   },
   shelves: {},
-  router: null,
-}
+  router: null
+};

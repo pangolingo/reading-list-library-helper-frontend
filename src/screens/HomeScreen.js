@@ -1,21 +1,19 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import GoodreadsService from '../GoodreadsService';
 import ShelfPicker from '../ShelfPicker';
 import { apiBaseUrl } from '../config';
 import ShelfActions from '../reducers/actions';
 
-
-function jwtFromUrl(urlString){
+function jwtFromUrl(urlString) {
   var url = new URL(urlString);
-  return url.searchParams.get("jwt");
+  return url.searchParams.get('jwt');
 }
 
 let jwt = jwtFromUrl(window.location.href);
 
-let goodreadsService = new GoodreadsService(jwt, apiBaseUrl)
-
+let goodreadsService = new GoodreadsService(jwt, apiBaseUrl);
 
 class HomeScreen extends Component {
   constructor(props) {
@@ -27,35 +25,38 @@ class HomeScreen extends Component {
     this.props.shelfActions.fetchShelfList(goodreadsService);
   }
   handleShelfNavigate(newShelfName) {
-    this.props.history.push(`/shelves/${newShelfName}`)
+    this.props.history.push(`/shelves/${newShelfName}`);
   }
   render() {
     const shelfList = this.props.shelfList;
-    return <div>
-      <h2>Home</h2>
-      { shelfList.error
-        ? <p>{shelfList.error.message}</p>
-        : <ShelfPicker shelves={shelfList} handleChange={this.handleShelfNavigate}></ShelfPicker>
-    }
-    </div>
+    return (
+      <div>
+        <h2>Home</h2>
+        {shelfList.error ? (
+          <p>{shelfList.error.message}</p>
+        ) : (
+          <ShelfPicker
+            shelves={shelfList}
+            handleChange={this.handleShelfNavigate}
+          />
+        )}
+      </div>
+    );
   }
 }
 
 const mapStateToProps = state => {
   return {
     shelfList: state.shelfList
-  }
-}
+  };
+};
 
 const mapDispatchToProps = dispatch => {
   return {
-    shelfActions: bindActionCreators(ShelfActions, dispatch),
-  }
-}
+    shelfActions: bindActionCreators(ShelfActions, dispatch)
+  };
+};
 
-HomeScreen = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(HomeScreen)
+HomeScreen = connect(mapStateToProps, mapDispatchToProps)(HomeScreen);
 
-export default HomeScreen
+export default HomeScreen;

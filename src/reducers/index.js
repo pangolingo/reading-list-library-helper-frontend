@@ -1,37 +1,36 @@
-import { combineReducers } from 'redux'
-import { routerReducer } from 'react-router-redux'
+import { combineReducers } from 'redux';
+import { routerReducer } from 'react-router-redux';
 import {
   FETCH_SHELF_LIST_REQUEST,
   FETCH_SHELF_LIST_SUCCESS,
   FETCH_SHELF_LIST_FAILURE,
   FETCH_SHELF_REQUEST,
   FETCH_SHELF_SUCCESS,
-  FETCH_SHELF_FAILURE,
-} from './actions'
-
+  FETCH_SHELF_FAILURE
+} from './actions';
 
 function shelfList(state = {}, action) {
   switch (action.type) {
     case FETCH_SHELF_LIST_REQUEST:
       return {
         ...state,
-        loading: true,
-      }
+        loading: true
+      };
     case FETCH_SHELF_LIST_SUCCESS:
       return {
         ...state,
         loading: false,
         error: null,
-        items: action.shelfList,
-      }
+        items: action.shelfList
+      };
     case FETCH_SHELF_LIST_FAILURE:
       return {
         ...state,
         loading: false,
-        error: action.error,
-      }
+        error: action.error
+      };
     default:
-      return state
+      return state;
   }
 }
 
@@ -45,16 +44,16 @@ const defaultShelfState = {
   pagination: {
     pages: {},
     currentPage: 1,
-    totalPages: null,
+    totalPages: null
   }
-}
+};
 
 const defaultShelfPageState = {
   loading: true,
-  ids: [],
-}
+  ids: []
+};
 
-function bookArrayToObject(books){
+function bookArrayToObject(books) {
   return books.reduce((accumulator, book, i) => {
     accumulator[String(book.id)] = book;
     return accumulator;
@@ -67,7 +66,7 @@ function shelves(state = {}, action) {
       let shelf;
       let page;
       // if we don't have a state for this shelf, create it
-      if(action.shelfName in state) {
+      if (action.shelfName in state) {
         shelf = state[action.shelfName];
       } else {
         shelf = Object.assign({}, defaultShelfState, {
@@ -75,7 +74,7 @@ function shelves(state = {}, action) {
         });
       }
       // if we don't have a state for this page, create it
-      if(action.page in shelf.pagination.pages){
+      if (action.page in shelf.pagination.pages) {
         page = shelf.pagination.pages[action.page];
       } else {
         page = Object.assign({}, defaultShelfPageState);
@@ -87,8 +86,8 @@ function shelves(state = {}, action) {
 
       return {
         ...state,
-        [action.shelfName]: shelf,
-      }
+        [action.shelfName]: shelf
+      };
     case FETCH_SHELF_SUCCESS:
       let booksById = bookArrayToObject(action.shelf.books);
       return {
@@ -100,7 +99,7 @@ function shelves(state = {}, action) {
           description: action.shelf.description,
           books: {
             ...state[action.shelfName].books,
-            ...booksById,
+            ...booksById
           },
           totalBooks: action.shelf.pagination.total,
           pagination: {
@@ -108,33 +107,33 @@ function shelves(state = {}, action) {
               ...state[action.shelfName].pagination.pages,
               [action.page]: {
                 loading: false,
-                ids: action.shelf.books.map(book => book.id),
+                ids: action.shelf.books.map(book => book.id)
               }
             },
             currentPage: action.page,
-            totalPages: action.shelf.pagination.numpages,
+            totalPages: action.shelf.pagination.numpages
           }
-        }),
-      }
+        })
+      };
     case FETCH_SHELF_FAILURE:
-    return {
-      ...state,
-      [action.shelfName]: Object.assign({}, state[action.shelfName], {
-        error: state.error,
-        pagination: {
-          ...state[action.shelfName].pagination,
-          pages: {
-            ...state[action.shelfName].pagination.pages,
-            [action.page]: {
-              ...state[action.shelfName].pagination.pages[action.page],
-              loading: false,
+      return {
+        ...state,
+        [action.shelfName]: Object.assign({}, state[action.shelfName], {
+          error: state.error,
+          pagination: {
+            ...state[action.shelfName].pagination,
+            pages: {
+              ...state[action.shelfName].pagination.pages,
+              [action.page]: {
+                ...state[action.shelfName].pagination.pages[action.page],
+                loading: false
+              }
             }
           }
-        }
-      }),
-    }
+        })
+      };
     default:
-      return state
+      return state;
   }
 }
 
@@ -142,6 +141,6 @@ const libraryHelper = combineReducers({
   shelves,
   shelfList,
   router: routerReducer
-})
+});
 
-export default libraryHelper
+export default libraryHelper;
