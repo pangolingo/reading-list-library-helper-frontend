@@ -1,4 +1,7 @@
 import { push } from 'react-router-redux';
+import localForage from 'localforage';
+import GoodreadsService from '../GoodreadsService';
+import { apiBaseUrl } from '../config';
 
 export const FETCH_SHELF_LIST_REQUEST = 'FETCH_SHELVES_REQUEST';
 function fetchShelfListRequest() {
@@ -21,11 +24,11 @@ function fetchShelfListFailure(error) {
   };
 }
 
-export function fetchShelfList(goodreadsService) {
+export function fetchShelfList(jwt) {
   return function(dispatch) {
     dispatch(fetchShelfListRequest());
 
-    goodreadsService
+    goodreadsService(jwt)
       .getShelves()
       .then(shelfList => {
         dispatch(fetchShelfListSuccess(shelfList));
@@ -68,11 +71,15 @@ function fetchShelfFailure(shelfName, page, error) {
   };
 }
 
-export function fetchShelf(goodreadsService, shelfName, page) {
+function goodreadsService(jwt) {
+  return new GoodreadsService(jwt, apiBaseUrl);
+}
+
+export function fetchShelf(jwt, shelfName, page) {
   return function(dispatch) {
     dispatch(fetchShelfRequest(shelfName, page));
 
-    goodreadsService
+    goodreadsService(jwt)
       .getShelf(shelfName, page)
       .then(shelf => {
         dispatch(fetchShelfSuccess(shelfName, page, shelf));
@@ -88,10 +95,51 @@ export function fetchShelf(goodreadsService, shelfName, page) {
   };
 }
 
-export const LOGIN = 'LOGIN';
-export const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
-export const LOGIN_FAILURE = 'LOGIN_FAILURE';
-export const LOGOUT = 'LOGOUT';
+function jwtFromUrl(urlString) {
+  var url = new URL(urlString);
+  return url.searchParams.get('jwt');
+}
+
+export function authenticate() {
+  return function(dispatch) {
+    // look in url
+    let jwt = jwtFromUrl(window.location.href);
+    // look in local storage
+    if (!jwt) {
+      return localForage.getItem('jwt').then(localStorage_jwt => {
+        if (localStorage_jwt) {
+          dispatch(authTokenReceived(localStorage_jwt));
+        } else {
+          dispatch(authFailed());
+          dispatch(push('/login'));
+        }
+      });
+    } else {
+      dispatch(authTokenReceived(jwt));
+      return Promise.resolve(jwt);
+    }
+  };
+}
+export const AUTH_TOKEN_RECEIVED = 'AUTH_TOKEN_RECEIVED';
+function authTokenReceived(jwt) {
+  localForage.setItem('jwt', jwt);
+  return {
+    type: AUTH_TOKEN_RECEIVED,
+    jwt: jwt
+  };
+}
+export const AUTH_FAILED = 'AUTH_FAILED';
+function authFailed(jwt) {
+  return {
+    type: AUTH_FAILED
+  };
+}
+export const LOG_OUT = 'LOG_OUT';
+function logOut() {
+  return {
+    type: LOG_OUT
+  };
+}
 
 export default {
   fetchShelfList,
@@ -102,5 +150,10 @@ export default {
   fetchShelf,
   fetchShelfRequest,
   fetchShelfSuccess,
-  fetchShelfFailure
+  fetchShelfFailure,
+
+  authenticate,
+  authTokenReceived,
+  authFailed,
+  logOut
 };

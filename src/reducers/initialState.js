@@ -7,6 +7,7 @@ export default {
   shelves: {},
   router: null,
   auth: {
-    jwt: null
+    jwt: null,
+    authenticated: false
   }
 };

@@ -1,19 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import GoodreadsService from '../GoodreadsService';
 import ShelfPicker from '../ShelfPicker';
-import { apiBaseUrl } from '../config';
-import ShelfActions from '../reducers/actions';
-
-function jwtFromUrl(urlString) {
-  var url = new URL(urlString);
-  return url.searchParams.get('jwt');
-}
-
-let jwt = jwtFromUrl(window.location.href);
-
-let goodreadsService = new GoodreadsService(jwt, apiBaseUrl);
+import ShelfActions from '../actions/';
 
 class HomeScreen extends Component {
   constructor(props) {
@@ -21,8 +10,22 @@ class HomeScreen extends Component {
 
     this.handleShelfNavigate = this.handleShelfNavigate.bind(this);
   }
+  componentWillUpdate(nextProps) {
+    if (!nextProps.authenticated) {
+      this.props.shelfActions.authenticate();
+    }
+  }
+  componentDidUpdate(prevProps) {
+    if (!prevProps.authenticated && this.props.authenticated) {
+      this.props.shelfActions.fetchShelfList(this.props.goodreadsToken);
+    }
+  }
   componentDidMount() {
-    this.props.shelfActions.fetchShelfList(goodreadsService);
+    if (!this.props.authenticated) {
+      this.props.shelfActions.authenticate();
+    } else {
+      this.props.shelfActions.fetchShelfList(this.props.goodreadsToken);
+    }
   }
   handleShelfNavigate(newShelfName) {
     this.props.history.push(`/shelves/${newShelfName}`);
@@ -47,7 +50,9 @@ class HomeScreen extends Component {
 
 const mapStateToProps = state => {
   return {
-    shelfList: state.shelfList
+    shelfList: state.shelfList,
+    authenticated: state.auth.authenticated,
+    goodreadsToken: state.auth.jwt
   };
 };
 

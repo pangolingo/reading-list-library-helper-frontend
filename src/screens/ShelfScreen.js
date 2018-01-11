@@ -1,22 +1,11 @@
 import React, { Component } from 'react';
 import _ from 'underscore';
-import GoodreadsService from '../GoodreadsService';
 import BookSummary from '../components/BookSummary';
 import { Link } from 'react-router-dom';
-import { apiBaseUrl } from '../config';
-import ShelfActions from '../reducers/actions';
+import ShelfActions from '../actions';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { onLastPageOfShelf, isLoadingShelf } from '../reducers';
-
-function jwtFromUrl(urlString) {
-  var url = new URL(urlString);
-  return url.searchParams.get('jwt');
-}
-
-let jwt = jwtFromUrl(window.location.href);
-
-let goodreadsService = new GoodreadsService(jwt, apiBaseUrl);
+import { onLastPageOfShelf, isLoadingShelf } from '../reducers/ShelvesReducer';
 
 class ShelfScreen extends Component {
   constructor(props) {
@@ -24,9 +13,32 @@ class ShelfScreen extends Component {
 
     this.getNextPage = this.getNextPage.bind(this);
   }
+  componentWillUpdate(nextProps) {
+    if (!nextProps.authenticated) {
+      this.props.shelfActions.authenticate();
+    }
+  }
+  componentDidUpdate(prevProps) {
+    let shelfName = this.props.match.params.name;
+    if (!prevProps.authenticated && this.props.authenticated) {
+      this.props.shelfActions.fetchShelf(
+        this.props.goodreadsToken,
+        shelfName,
+        1
+      );
+    }
+  }
   componentDidMount() {
     let shelfName = this.props.match.params.name;
-    this.props.shelfActions.fetchShelf(goodreadsService, shelfName, 1);
+    if (!this.props.authenticated) {
+      this.props.shelfActions.authenticate();
+    } else {
+      this.props.shelfActions.fetchShelf(
+        this.props.goodreadsToken,
+        shelfName,
+        1
+      );
+    }
   }
   getNextPage() {
     if (this.props.onLastPageOfShelf) {
@@ -35,7 +47,7 @@ class ShelfScreen extends Component {
     let shelfName = this.props.match.params.name;
     let pageToFetch = this.props.shelves[shelfName].pagination.currentPage + 1;
     this.props.shelfActions.fetchShelf(
-      goodreadsService,
+      this.props.goodreadsToken,
       shelfName,
       pageToFetch
     );
@@ -81,9 +93,6 @@ class ShelfScreen extends Component {
       return null;
     }
     let atEnd = this.props.onLastPageOfShelf;
-    // shelf.pagination.currentPage >= shelf.pagination.totalPages &&
-    // !shelf.pagination.pages[shelf.pagination.currentPage].loading;
-    let nextPage = shelf.pagination.pages[shelf.pagination.currentPage + 1];
     let isLoading = this.props.loading;
     let buttonText = 'Load more';
     if (atEnd) {
@@ -143,7 +152,9 @@ const mapStateToProps = (state, ownProps) => {
     shelfName,
     shelf: shelf,
     onLastPageOfShelf: onLastPageOfShelf(state, shelfName),
-    loading: isLoadingShelf(shelf)
+    loading: isLoadingShelf(shelf),
+    authenticated: state.auth.authenticated,
+    goodreadsToken: state.auth.jwt
   };
 };
 
