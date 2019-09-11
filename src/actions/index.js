@@ -24,12 +24,12 @@ function fetchShelfListFailure(error) {
   };
 }
 
-export function fetchShelfList(jwt) {
+export function fetchShelfList(jwt, isOnline = true) {
   return function(dispatch) {
     dispatch(fetchShelfListRequest());
 
     goodreadsService(jwt)
-      .getShelves()
+      .getShelves(isOnline)
       .then(shelfList => {
         dispatch(fetchShelfListSuccess(shelfList));
       })
@@ -71,16 +71,27 @@ function fetchShelfFailure(shelfName, page, error) {
   };
 }
 
+export const TOGGLE_FAVORITE_BOOK = 'TOGGLE_FAVORITE_BOOK';
+export function toggleFavoriteBook(shelfName, bookId) {
+  return function(dispatch) {
+    dispatch({
+      type: TOGGLE_FAVORITE_BOOK,
+      shelfName,
+      bookId
+    });
+  };
+}
+
 function goodreadsService(jwt) {
   return new GoodreadsService(jwt, apiBaseUrl);
 }
 
-export function fetchShelf(jwt, shelfName, page) {
+export function fetchShelf(jwt, shelfName, page, isOnline = true) {
   return function(dispatch) {
     dispatch(fetchShelfRequest(shelfName, page));
 
     goodreadsService(jwt)
-      .getShelf(shelfName, page)
+      .getShelf(shelfName, page, isOnline)
       .then(shelf => {
         dispatch(fetchShelfSuccess(shelfName, page, shelf));
       })
@@ -146,6 +157,8 @@ export default {
   fetchShelfListRequest,
   fetchShelfListSuccess,
   fetchShelfListFailure,
+
+  toggleFavoriteBook,
 
   fetchShelf,
   fetchShelfRequest,

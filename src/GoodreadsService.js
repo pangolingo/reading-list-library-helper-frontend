@@ -2,7 +2,7 @@ import localForage from 'localforage';
 import moment from 'moment';
 
 export function OfflineException(code, message) {
-  this.message = message;
+  this.message = message || 'Unable to fetch data: you are offline.';
   this.code = code;
   this.name = 'OfflineException';
 }
@@ -58,18 +58,27 @@ class GoodreadsService {
 
     return fetch(endpoint, settings);
   }
-  getShelf(name, page = 1) {
+  getShelf(name, page = 1, isOnline = true) {
     return localForage
       .getItem(this.shelfCacheName(name, page))
       .then(bookData => {
-        if (bookData === null || this.responseIsExpired(bookData.queryDate)) {
-          return this.loadShelf(name, page);
-        } else {
-          return bookData.shelf;
+        // no data: try to fetch it
+        if (!bookData) {
+          return this.loadShelf(name, page, isOnline);
         }
+        // we have data but it's expired
+        // if we're online we can try to fetch fresh data
+        if (isOnline && this.responseIsExpired(bookData.queryDate)) {
+          return this.loadShelf(name, page, isOnline);
+        }
+        // use the data from the cache
+        return bookData.shelf;
       });
   }
-  loadShelf(name, page = 1) {
+  loadShelf(name, page = 1, isOnline = true) {
+    if (!isOnline) {
+      throw new OfflineException();
+    }
     return this.request(
       `${this.apiBaseUrl}/api/shelves/${name}?page=${page}&per_page=50`
     )
@@ -103,19 +112,25 @@ class GoodreadsService {
     return `shelf.${name}.${page}`;
   }
 
-  getShelves() {
+  getShelves(isOnline = true) {
     return localForage.getItem('shelves').then(shelvesData => {
-      if (
-        shelvesData === null ||
-        this.responseIsExpired(shelvesData.queryDate)
-      ) {
-        return this.loadShelves();
-      } else {
-        return shelvesData.shelves;
+      // no data: try to fetch it
+      if (!shelvesData) {
+        return this.loadShelves(isOnline);
       }
+      // we have data but it's expired
+      // if we're online we can try to fetch fresh data
+      if (isOnline && this.responseIsExpired(shelvesData.queryDate)) {
+        return this.loadShelves(isOnline);
+      }
+      // use the data from the cache
+      return shelvesData.shelves;
     });
   }
-  loadShelves() {
+  loadShelves(isOnline = true) {
+    if (!isOnline) {
+      throw new OfflineException();
+    }
     // todo: catch errors here
     return this.request(`${this.apiBaseUrl}/api/shelves`)
       .then(this.checkResponseCode)
@@ -148,6 +163,7 @@ class GoodreadsService {
     return response;
   }
   responseIsExpired(responseQueryDate) {
+    return true;
     // the query date was more than 1 day ago
     return moment(responseQueryDate).add(1, 'day') < moment();
   }

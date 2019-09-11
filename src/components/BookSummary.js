@@ -23,6 +23,12 @@ class BookSummary extends Component {
             alt={book.title}
             className="BookSummary__image"
           />
+          <button
+            className="BookSummary__favorite_button"
+            onClick={this.props.handleFavoriteToggle}
+          >
+            {this.props.isFavorite ? 'Unstar' : 'Star'}
+          </button>
         </div>
         <div className="BookSummary_right-col">
           <h2 className="BookSummary__title">{book.title}</h2>

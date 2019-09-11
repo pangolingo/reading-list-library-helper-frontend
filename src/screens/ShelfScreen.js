@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import _ from 'underscore';
 import BookSummary from '../components/BookSummary';
 import { Link } from 'react-router-dom';
+import withOfflineState from 'react-offline-hoc';
 import ShelfActions from '../actions';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -12,6 +13,8 @@ class ShelfScreen extends Component {
     super(props);
 
     this.getNextPage = this.getNextPage.bind(this);
+    this.handleFavoriteToggle = this.handleFavoriteToggle.bind(this);
+    this.fetchData = this.fetchData.bind(this);
   }
   componentWillUpdate(nextProps) {
     if (!nextProps.authenticated) {
@@ -19,26 +22,30 @@ class ShelfScreen extends Component {
     }
   }
   componentDidUpdate(prevProps) {
-    let shelfName = this.props.match.params.name;
     if (!prevProps.authenticated && this.props.authenticated) {
-      this.props.shelfActions.fetchShelf(
-        this.props.goodreadsToken,
-        shelfName,
-        1
-      );
+      this.fetchData();
+    }
+
+    // we came online: fetch the latest shelf data
+    if (!prevProps.isOnline && this.props.isOnline) {
+      this.fetchData();
     }
   }
   componentDidMount() {
-    let shelfName = this.props.match.params.name;
     if (!this.props.authenticated) {
       this.props.shelfActions.authenticate();
     } else {
-      this.props.shelfActions.fetchShelf(
-        this.props.goodreadsToken,
-        shelfName,
-        1
-      );
+      this.fetchData();
     }
+  }
+  fetchData() {
+    let shelfName = this.props.match.params.name;
+    this.props.shelfActions.fetchShelf(
+      this.props.goodreadsToken,
+      shelfName,
+      1,
+      this.props.isOnline
+    );
   }
   getNextPage() {
     if (this.props.onLastPageOfShelf) {
@@ -52,6 +59,11 @@ class ShelfScreen extends Component {
       pageToFetch
     );
   }
+  handleFavoriteToggle(bookId) {
+    let shelfName = this.props.match.params.name;
+    console.log('favoriting', bookId);
+    this.props.shelfActions.toggleFavoriteBook(shelfName, bookId);
+  }
   _renderPages() {
     let shelfName = this.props.match.params.name;
     let shelf = this.props.shelves[shelfName];
@@ -63,7 +75,19 @@ class ShelfScreen extends Component {
         <div key={`page_${pageNum}`} className="Shelf__page">
           {page.ids.map(id => {
             let book = shelf.books[id];
-            return <BookSummary key={book.id} book={book} />;
+            const isFavorite = shelf.favorites.includes(id);
+            return (
+              <BookSummary
+                key={book.id}
+                book={book}
+                isFavorite={isFavorite}
+                handleFavoriteToggle={this.handleFavoriteToggle.bind(
+                  this,
+                  book.id,
+                  isFavorite
+                )}
+              />
+            );
           })}
         </div>
       );
@@ -125,19 +149,24 @@ class ShelfScreen extends Component {
         {this._renderPages()}
         {this._renderPagination()}
         {shelf && !isEmpty && this._renderNextPageButton()}
+        <a href="#top">Back to the top</a>
       </div>
     );
   }
 
   render() {
     let shelfName = this.props.match.params.name;
-
+    let shelf = this.props.shelves[shelfName];
     return (
       <div className="Shelf">
         <Link to="/">Back</Link>
         <h2 className="Shelf__title">Shelf "{shelfName}"</h2>
-        {this._renderContent()}
-        <a href="#top">Back to the top</a>
+        {!shelf && <p>Error loading shelf.</p>}
+        {shelf && shelf.error ? (
+          <p>{shelf.error.message}</p>
+        ) : (
+          this._renderContent()
+        )}
       </div>
     );
   }
@@ -164,6 +193,8 @@ const mapDispatchToProps = dispatch => {
   };
 };
 
-ShelfScreen = connect(mapStateToProps, mapDispatchToProps)(ShelfScreen);
+ShelfScreen = connect(mapStateToProps, mapDispatchToProps)(
+  withOfflineState(ShelfScreen)
+);
 
 export default ShelfScreen;

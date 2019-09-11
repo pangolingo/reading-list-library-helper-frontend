@@ -2,7 +2,8 @@ import _ from 'underscore';
 import {
   FETCH_SHELF_REQUEST,
   FETCH_SHELF_SUCCESS,
-  FETCH_SHELF_FAILURE
+  FETCH_SHELF_FAILURE,
+  TOGGLE_FAVORITE_BOOK
 } from '../actions';
 
 const defaultShelfState = {
@@ -12,6 +13,7 @@ const defaultShelfState = {
   description: null,
   books: {},
   totalBooks: null,
+  favorites: [],
   pagination: {
     pages: {},
     currentPage: 1,
@@ -88,7 +90,7 @@ export default function ShelvesReducer(state = {}, action) {
       return {
         ...state,
         [action.shelfName]: Object.assign({}, formerShelf, {
-          error: state.error,
+          error: action.error,
           pagination: {
             ...formerShelf.pagination,
             pages: {
@@ -99,6 +101,19 @@ export default function ShelvesReducer(state = {}, action) {
               }
             }
           }
+        })
+      };
+    case TOGGLE_FAVORITE_BOOK:
+      let favorites = formerShelf.favorites;
+      if (favorites.includes(action.bookId)) {
+        favorites = _.without(favorites, action.bookId);
+      } else {
+        favorites.push(action.bookId);
+      }
+      return {
+        ...state,
+        [action.shelfName]: Object.assign({}, formerShelf, {
+          favorites
         })
       };
     default:
